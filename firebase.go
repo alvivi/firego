@@ -59,10 +59,8 @@ func sanitizeURL(url string) string {
 
 // New creates a new Firebase reference
 func New(url string) *Firebase {
-
 	var tr *http.Transport
 	tr = &http.Transport{
-		DisableKeepAlives: true, // https://code.google.com/p/go/issues/detail?id=3514
 		Dial: func(network, address string) (net.Conn, error) {
 			start := time.Now()
 			c, err := net.DialTimeout(network, address, TimeoutDuration)
