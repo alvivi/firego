@@ -57,22 +57,26 @@ func sanitizeURL(url string) string {
 	return url
 }
 
-// New creates a new Firebase reference
-func New(url string) *Firebase {
-	var tr *http.Transport
-	tr = &http.Transport{
-		Dial: func(network, address string) (net.Conn, error) {
-			start := time.Now()
-			c, err := net.DialTimeout(network, address, TimeoutDuration)
-			tr.ResponseHeaderTimeout = TimeoutDuration - time.Since(start)
-			return c, err
-		},
+// New creates a new Firebase reference. Using a custom client invalidates the
+// TimeoutDuration guarantee.
+func New(url string, client *http.Client) *Firebase {
+	if client == nil {
+		var tr *http.Transport
+		tr = &http.Transport{
+			Dial: func(network, address string) (net.Conn, error) {
+				start := time.Now()
+				c, err := net.DialTimeout(network, address, TimeoutDuration)
+				tr.ResponseHeaderTimeout = TimeoutDuration - time.Since(start)
+				return c, err
+			},
+		}
+		client = &http.Client{Transport: tr}
 	}
 
 	return &Firebase{
 		url:          sanitizeURL(url),
 		params:       _url.Values{},
-		client:       &http.Client{Transport: tr},
+		client:       client,
 		stopWatching: make(chan struct{}),
 	}
 }
